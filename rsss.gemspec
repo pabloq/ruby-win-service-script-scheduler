@@ -1,3 +1,7 @@
+require 'rubygems'
+
+spec = Gem::Specification.new
+spec.name = 'rsss'
 spec.author = 'Pablo Quiros'
 spec.bindir = 'lib'
 spec.default_executable = 'bin/rsss'
