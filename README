@@ -1,0 +1,141 @@
+== Ruby script scheduler installed like a windows service (RSSS)
+
+The Ruby Script Scheduler is a windows service script installer
+that installs any script to run in a previously defined schedule.
+
+== dependencies
+
++ rufus-scheduler (1.0.12): John Mettraux (http://github.com/jmettraux/rufus-scheduler/tree/master)
++ win32-service (0.6.1): Daniel J. Berger, Park Heesob (http://rubyforge.org/docman/view.php/85/595/service.html)
+
+== configuration
+
+Everything is setup in a “yaml” file with the following fields:
+
+	+ logs path: path for the log of the external runner.
+	+ logs file path: path for the log file of the script setup.
+	+ job file name: File name for the log file (when the scheduler run the file it generates a file with the format <date>_<job file name>.log)
+	+ script: script to be ran.
+	+ argv: the parameters of the script
+	+ day: 'cron' style specification
+	+ days: list of the days that it must run.
+	+ service code: service code name to identify the name of the windows service
+	+ service name: service name to display
+	+ description: description of the service
+
+
+== how it works?
+
+
+The RSSS helps people that want to run some scripts in windows machines in a scheduled time.
+
+Let’s see two cases:
+	+ Run scripts some day of the week
+	+ Run scripts some days in a month, year, something less frequent
+
+Let run the following class in a daily schedule configuration
+
+#foo.rb
+class Foo
+  def initialize(param1,param2)
+    @param1,@param2 = param1,param2
+  end
+  def to_s
+    "Hello world! param1 = #{@param1}, param2 = #{@param2}\nT his must be seen in my script logs."
+  end
+end
+
+If we want to run the script before we must define a runner for the script in the following format:
+
+require <SCRIPT TO RUN>
+class RSSS_runner
+  class << self
+    def start argv=nil
+      process = <CLASS>.new(<param1>,<param2>,...)
+      <CODE THAT EXECUTE YOUR SCRIPT>
+    end
+  end
+end
+
+So, in the case of foo.rb script, it should look like this:
+
+#foo_runner.rb
+require 'foo'
+class RSSS_runner
+  class << self
+    def start argv=nil
+      process = Foo.new(argv[0],argv[1])
+      puts process #just execute the to_s method to check that it received the correct parameters
+    end
+  end
+end
+
+The configuration file looks like this:
+
+#foo_conf.yaml
+---
+:logs_file_name: foo_log_name
+:script: foo_runner.rb
+:argv:
+- hi
+- my name is pablo quiros
+:day: 24 12 * * *
+:service_code: test_foo_win_service
+:service_name: test foo script scheduled in windows service
+:description: Hello world this is a stupid script that runs scheduled in windows service!
+
+Now that we have the runner file (foo_runner.rb) and the configuration file (foo_conf.yaml) we can install it.
+
+require 'rsss'
+rsss = RSSS.new 'foo_conf.yaml'
+
+#install window service
+rsss.install
+
+#start the service
+rsss.start
+
+#stop the service
+rsss.stop
+
+#resume the service
+rsss.resume
+
+#pause the service
+rsss.pause
+
+#return status object of the service (check win32-service)
+rsss.status
+
+#delete the service
+rsss.delete
+
+#show the configuration of the service
+puts rsss
+
+In this case the script will run every day at 12:24 (:day: 24 12 * * *).
+For more detail about the 'cron' style go here: www.scrounge.org/linux/cron.html
+
+If you want to run the script in some specific days use the following nomenclature:
+
+:days:
+- 18 AUGUST 2009 02:00:00
+- 18 SEPTEMBER 2009 02:00:00
+
+In that case it will run those days at that time.
+
+To change the log file just add the following option:
+
+:logs_path: <LOGS PATH>
+
+Every time that the process runs it would generate a "job file". If the job file exists and it has a flag code inside (FLAG=1) means that it ran ok.
+The process run just when this file doesn't exist or it hasn't the correct flag inside.
+
+If want to change the path for the job files just add the following option:
+
+:job_file_path: <JOB PATH>
+
+== author
+
+Pablo Quiros Solis (paqs140482@gmail.com)
+pabloqs.blogspot.com
