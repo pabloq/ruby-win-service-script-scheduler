@@ -1,8 +1,8 @@
 ---
-:logs_path: lib
+:logs_path: E:/projects/RubyScriptsShedulerServiceInstaller/lib
 :logs_file_name: run_this_name
-:job_file_path: lib
-:script: lib/run_this.rb
+:job_file_path: E:/projects/RubyScriptsShedulerServiceInstaller/lib
+:script: E:/projects/RubyScriptsShedulerServiceInstaller/lib/run_this.rb
 :argv:
 - hi
 - my name is pablo
